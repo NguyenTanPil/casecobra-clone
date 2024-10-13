@@ -1,4 +1,6 @@
+import { db } from '@/db';
 import { notFound } from 'next/navigation';
+import DesignConfigurator from './DesignConfigurator';
 
 interface DesignProps {
 	searchParams: {
@@ -13,7 +15,25 @@ const Design = async ({ searchParams }: DesignProps) => {
 		return notFound();
 	}
 
-	return <div>{id}</div>;
+	const configuration = await db.configuration.findUnique({
+		where: {
+			id,
+		},
+	});
+
+	if (!configuration) {
+		return notFound();
+	}
+
+	const { imageUrl, width, height } = configuration;
+
+	return (
+		<DesignConfigurator
+			configId={configuration.id}
+			imageUrl={imageUrl}
+			imageDimensions={{ width, height }}
+		/>
+	);
 };
 
 export default Design;

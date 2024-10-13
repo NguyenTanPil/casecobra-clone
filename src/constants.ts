@@ -39,3 +39,51 @@ export const STEPS = [
 		imgSrc: snack3Image,
 	},
 ];
+
+export const COLORS = [
+	{
+		label: 'Black',
+		value: 'black',
+		tw: 'zinc-900',
+	},
+	{
+		label: 'Blue',
+		value: 'blue',
+		tw: 'blue-950',
+	},
+	{
+		label: 'Rose',
+		value: 'rose',
+		tw: 'rose-950',
+	},
+] as const;
+
+export const MODELS = {
+	name: 'models',
+	options: [
+		{
+			label: 'iPhoneX',
+			value: 'iphonex',
+		},
+		{
+			label: 'iPhone11',
+			value: 'iphone11',
+		},
+		{
+			label: 'iPhone12',
+			value: 'iphone12',
+		},
+		{
+			label: 'iPhone13',
+			value: 'iphone13',
+		},
+		{
+			label: 'iPhone14',
+			value: 'iphone14',
+		},
+		{
+			label: 'iPhone15',
+			value: 'iphone15',
+		},
+	],
+} as const;

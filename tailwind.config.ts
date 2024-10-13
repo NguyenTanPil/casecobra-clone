@@ -82,6 +82,7 @@ const config: Config = {
 			},
 		},
 	},
+	safelist: ['bg-blue-950', 'border-blue-950', 'bg-zinc-900', 'border-zinc-900', 'bg-rose-950', 'border-rose-950'],
 	plugins: [require('tailwindcss-animate')],
 };
 export default config;
