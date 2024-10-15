@@ -1,15 +1,14 @@
 'use client';
 
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import Image from 'next/image';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import phoneImage from '@/assets/images/phone-template.png';
 import { cn } from '@/lib/utils';
 import { Rnd } from 'react-rnd';
 import HandleResizeComponent from '@/components/HandleResizeComponent';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RadioGroup } from '@headlessui/react';
-import { COLORS, MODELS } from '@/constants';
+import { BASE_PRICE, COLORS, FINISHES, MATERIALS, MODELS } from '@/constants';
 import { Label } from '@/components/ui/label';
 import {
 	DropdownMenu,
@@ -18,7 +17,9 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { ArrowRight, Check, ChevronsUpDown } from 'lucide-react';
+import { formatPrice } from '@/utils';
+import NextImage from 'next/image';
 
 interface DesignConfiguratorProps {
 	imageUrl: string;
@@ -33,20 +34,75 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 	const [options, setOptions] = useState<{
 		color: (typeof COLORS)[number];
 		model: (typeof MODELS.options)[number];
+		material: (typeof MATERIALS.options)[number];
+		finish: (typeof FINISHES.options)[number];
 	}>({
 		color: COLORS[0],
 		model: MODELS.options[0],
+		material: MATERIALS.options[0],
+		finish: FINISHES.options[0],
 	});
+
+	const [renderedDimension, setRenderedDimension] = useState<{ width: number; height: number }>({
+		width: imageDimensions.width / 4,
+		height: imageDimensions.height / 4,
+	});
+	const [renderedPosition, setRenderedPosition] = useState<{ x: number; y: number }>({
+		x: 150,
+		y: 205,
+	});
+
+	const phoneCaseRef = useRef<HTMLDivElement | null>(null);
+	const containerRef = useRef<HTMLDivElement | null>(null);
+
+	const saveConfiguration = async () => {
+		console.log({ phoneCaseRef });
+		if (!phoneCaseRef.current) return;
+
+		try {
+			const { left: caseLeft, top: caseTop, width, height } = phoneCaseRef.current!.getBoundingClientRect();
+
+			const { left: containerLeft, top: containerTop } = containerRef.current!.getBoundingClientRect();
+
+			const leftOffset = caseLeft - containerLeft;
+			const topOffset = caseTop - containerTop;
+
+			const actualX = renderedPosition.x - leftOffset;
+			const actualY = renderedPosition.y - topOffset;
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+
+			const userImage = new Image();
+			userImage.crossOrigin = 'anonymous';
+			userImage.src = imageUrl;
+			await new Promise((resolve) => (userImage.onload = resolve));
+
+			ctx?.drawImage(userImage, actualX, actualY, renderedDimension.width, renderedDimension.height);
+
+			const base64 = canvas.toDataURL();
+			console.log(base64);
+			const base64Data = base64.split(',')[1];
+		} catch (error) {
+			console.log({ error });
+		}
+	};
 
 	return (
 		<div className='relative mt-20 grid grid-cols-1 lg:grid-cols-3 mb-20 pb-20'>
-			<div className='relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'>
+			<div
+				ref={containerRef}
+				className='relative h-[37.5rem] overflow-hidden col-span-2 w-full max-w-4xl flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 text-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2'
+			>
 				<div className='relative w-60 bg-opacity-50 pointer-events-none aspect-[896/1831]'>
 					<AspectRatio
+						ref={phoneCaseRef}
 						ratio={896 / 1831}
 						className='pointer-events-none relative z-50 aspect-[896 / 1831]'
 					>
-						<Image
+						<NextImage
 							alt='phone image'
 							src={phoneImage}
 						/>
@@ -74,9 +130,19 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 						topRight: <HandleResizeComponent />,
 						topLeft: <HandleResizeComponent />,
 					}}
+					onResizeStop={(_, __, ref, ___, { x, y }) => {
+						setRenderedPosition({ x, y });
+						setRenderedDimension({
+							height: parseInt(ref.style.height.slice(0, -2)),
+							width: parseInt(ref.style.width.slice(0, -2)),
+						});
+					}}
+					onDragStop={(_, { x, y }) => {
+						setRenderedPosition({ x, y });
+					}}
 				>
 					<div className='relative w-full h-full'>
-						<Image
+						<NextImage
 							fill={true}
 							src={imageUrl}
 							alt='your image'
@@ -86,7 +152,7 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 				</Rnd>
 			</div>
 
-			<div className='h-[37.5rem] flex flex-col bg-white'>
+			<div className='h-[37.5rem] flex flex-col bg-white w-full col-span-full lg:col-span-1'>
 				<ScrollArea className='relative flex-1 overflow-auto'>
 					<div
 						aria-hidden='true'
@@ -172,10 +238,87 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 										</DropdownMenuTrigger>
 									</DropdownMenu>
 								</div>
+
+								{[MATERIALS, FINISHES].map(({ name, options: selectableOptions }) => (
+									<RadioGroup
+										key={name}
+										value={options[name]}
+										onChange={(value) => {
+											setOptions((prev) => ({
+												...prev,
+												[name]: value,
+											}));
+										}}
+									>
+										<Label>{name.slice(0, 1).toUpperCase() + name.slice(1)}</Label>
+										<div className='mt-3 space-y-4'>
+											{selectableOptions.map((option) => (
+												<RadioGroup.Option
+													key={option.value}
+													value={option}
+													className={({ active, checked }) =>
+														cn(
+															'relative cursor-pointer rounded-lg bg-white px-6 py-4 shadow-sm border-2 border-zinc-200 focus:outline-none ring-0 focus:ring-0 outline-none sm:flex sm:justify-between',
+															{
+																'border-primary': active || checked,
+															},
+														)
+													}
+												>
+													<span className='flex items-center'>
+														<span className='flex flex-col text-sm'>
+															<RadioGroup.Label
+																as='span'
+																className='font-medium text-gray-900'
+															>
+																{option.label}
+															</RadioGroup.Label>
+
+															{option.description && (
+																<RadioGroup.Description
+																	as='span'
+																	className='text-gray-500'
+																>
+																	<span className='block sm:inline'>{option.description}</span>
+																</RadioGroup.Description>
+															)}
+														</span>
+													</span>
+
+													<RadioGroup.Description
+														as='span'
+														className='mt-2 flex text-sm sm:ml-4 sm:mt-0 sm:flex-col sm:text-right'
+													>
+														<span className='font-medium text-gray-900'>{formatPrice(option.price / 100)}</span>
+													</RadioGroup.Description>
+												</RadioGroup.Option>
+											))}
+										</div>
+									</RadioGroup>
+								))}
 							</div>
 						</div>
 					</div>
 				</ScrollArea>
+
+				<div className='w-full px-8 h-16 bg-white'>
+					<div className='h-px w-full bg-zinc-200' />
+					<div className='w-full h-full flex justify-end items-center'>
+						<div className='w-full flex gap-6 items-center'>
+							<p className='font-medium whitespace-nowrap'>
+								{formatPrice((BASE_PRICE + options.finish.price + options.material.price) / 100)}
+							</p>
+							<Button
+								size='sm'
+								className='w-full '
+								onClick={() => saveConfiguration()}
+							>
+								Continue
+								<ArrowRight className='h-4 w-4 ml-1.5 inline' />
+							</Button>
+						</div>
+					</div>
+				</div>
 			</div>
 		</div>
 	);
