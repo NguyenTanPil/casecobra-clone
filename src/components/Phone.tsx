@@ -5,11 +5,12 @@ import phoneDarkImage from '@/assets/images/phone-template-dark-edges.png';
 import phoneWhiteImage from '@/assets/images/phone-template-white-edges.png';
 
 interface PhoneProps extends HTMLAttributes<HTMLDivElement> {
-	imgSrc: StaticImageData;
+	imgSrc: StaticImageData | string;
 	dark?: boolean;
+	fill?: boolean;
 }
 
-const Phone = ({ imgSrc, className, dark = false, ...props }: PhoneProps) => {
+const Phone = ({ imgSrc, fill = false, className, dark = false, ...props }: PhoneProps) => {
 	return (
 		<div
 			className={cn('relative pointer-events-none z-50 overflow-hidden', className)}
@@ -22,6 +23,7 @@ const Phone = ({ imgSrc, className, dark = false, ...props }: PhoneProps) => {
 			/>
 			<div className='absolute -z-10 inset-0'>
 				<Image
+					fill={fill}
 					src={imgSrc}
 					alt='overlay phone image'
 					className='object-cover'

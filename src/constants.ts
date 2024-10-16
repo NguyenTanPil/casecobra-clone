@@ -88,7 +88,7 @@ export const MODELS = {
 	],
 } as const;
 
-const PRODUCT_PRICES = {
+export const PRODUCT_PRICES = {
 	material: {
 		silicone: 0,
 		polycarbonate: 5_00,

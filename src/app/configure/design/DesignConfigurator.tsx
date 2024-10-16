@@ -18,8 +18,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Check, ChevronsUpDown } from 'lucide-react';
-import { formatPrice } from '@/utils';
+import { base64ToBlob, formatPrice } from '@/utils';
 import NextImage from 'next/image';
+import { useUploadThing } from '@/lib/uploadthing';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation } from '@tanstack/react-query';
+import { SaveConfigArgs, saveConfig as _saveConfig } from './actions';
+import { useRouter } from 'next/navigation';
 
 interface DesignConfiguratorProps {
 	imageUrl: string;
@@ -55,8 +60,27 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 	const phoneCaseRef = useRef<HTMLDivElement | null>(null);
 	const containerRef = useRef<HTMLDivElement | null>(null);
 
+	const router = useRouter();
+	const { toast } = useToast();
+	const { startUpload } = useUploadThing('imageUploader');
+	const { mutate: saveConfig } = useMutation({
+		mutationKey: ['save-config'],
+		mutationFn: async (args: SaveConfigArgs) => {
+			await Promise.all([saveConfiguration(), _saveConfig(args)]);
+		},
+		onError: () => {
+			toast({
+				title: 'Something went wrong',
+				description: 'There was an error on our end. Please try again.',
+				variant: 'destructive',
+			});
+		},
+		onSuccess: () => {
+			router.push(`/configure/preview?id=${configId}`);
+		},
+	});
+
 	const saveConfiguration = async () => {
-		console.log({ phoneCaseRef });
 		if (!phoneCaseRef.current) return;
 
 		try {
@@ -83,10 +107,17 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 			ctx?.drawImage(userImage, actualX, actualY, renderedDimension.width, renderedDimension.height);
 
 			const base64 = canvas.toDataURL();
-			console.log(base64);
 			const base64Data = base64.split(',')[1];
-		} catch (error) {
-			console.log({ error });
+			const blob = base64ToBlob(base64Data, 'image/png');
+			const file = new File([blob], 'filename.png', { type: 'image/png' });
+
+			await startUpload([file], { configId });
+		} catch {
+			toast({
+				title: 'Something went wrong',
+				description: 'There was an error uploading, please try again.',
+				variant: 'destructive',
+			});
 		}
 	};
 
@@ -311,7 +342,15 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 							<Button
 								size='sm'
 								className='w-full '
-								onClick={() => saveConfiguration()}
+								onClick={() =>
+									saveConfig({
+										configId,
+										color: options.color.value,
+										finish: options.finish.value,
+										material: options.material.value,
+										model: options.model.value,
+									})
+								}
 							>
 								Continue
 								<ArrowRight className='h-4 w-4 ml-1.5 inline' />
