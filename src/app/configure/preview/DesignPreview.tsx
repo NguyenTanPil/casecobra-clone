@@ -6,21 +6,57 @@ import { BASE_PRICE, COLORS, MODELS, PRODUCT_PRICES } from '@/constants';
 import { cn } from '@/lib/utils';
 import { formatPrice } from '@/utils';
 import { Configuration } from '@prisma/client';
+import { useMutation } from '@tanstack/react-query';
 import { ArrowRight, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Confetti from 'react-dom-confetti';
+import { createCheckoutSession } from './actions';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs';
+import LoginModal from '@/components/LoginModal';
 
 const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
+	const router = useRouter();
+	const { toast } = useToast();
+	const { user } = useKindeBrowserClient();
 	const [showConfetti, setShowConfetti] = useState<boolean>(false);
+	const [isLoginModalOpen, setIsLoginModelOpen] = useState<boolean>(true);
 
-	const { color, model, finish, material } = configuration;
+	const { id, color, model, finish, material } = configuration;
 	const tw = COLORS.find(({ value }) => value === color)?.tw;
 	const { label: modelLabel } = MODELS.options.find(({ value }) => value === model)!;
 	let totalPrice = BASE_PRICE;
 	if (material === 'polycarbonate') totalPrice += PRODUCT_PRICES.material.polycarbonate;
 	if (finish === 'textured') totalPrice += PRODUCT_PRICES.finish.textured;
 
-	const handleCheckout = () => {};
+	const { mutate: createPaymentSession } = useMutation({
+		mutationKey: ['get-checkout-session'],
+		mutationFn: createCheckoutSession,
+		onSuccess: ({ url }) => {
+			if (url) {
+				router.push(url);
+			} else {
+				throw new Error('Unable to retrieve payment URL.');
+			}
+		},
+		onError: () => {
+			toast({
+				title: 'Something went wrong',
+				description: 'There was an error on our end. Please try again',
+				variant: 'destructive',
+			});
+		},
+	});
+
+	const handleCheckout = () => {
+		if (user) {
+			createPaymentSession({ configId: id });
+		} else {
+			localStorage.setItem('configurationId', id);
+			setIsLoginModelOpen(true);
+		}
+	};
 
 	useEffect(() => setShowConfetti(true), []);
 
@@ -38,6 +74,11 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
 					}}
 				/>
 			</div>
+
+			<LoginModal
+				isOpen={isLoginModalOpen}
+				setIsOpen={setIsLoginModelOpen}
+			/>
 
 			<div className='mt-20 flex flex-col items-center md:grid text-sm sm:grid-cols-12 sm:grid-rows-1 sm:gap-x-6 md:gap-x-8 lg:gap-x-12'>
 				<div className='md:col-span-4 lg:col-span-3 md:row-span-2 md:row-end-2'>
@@ -111,7 +152,7 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
 
 						<div className='mt-8 flex justify-end pb-12'>
 							<Button
-								onClick={() => handleCheckout()}
+								onClick={handleCheckout}
 								className='px-4 sm:px-6 lg:px-8'
 							>
 								Check out <ArrowRight className='h-4 w-4 ml-1.5 inline' />
@@ -125,3 +166,6 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
 };
 
 export default DesignPreview;
+
+// http://localhost:3000/configure/preview?id=cm2m1fgje000011pe3yk8q9pj
+// http://localhost:3000/thank-you?orderId=cm2m2f5rd000e11pe3h5xku3k
