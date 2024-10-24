@@ -16,13 +16,14 @@ const LoginModal = ({ isOpen, setIsOpen }: LoginModalProps) => {
 			onOpenChange={setIsOpen}
 			open={isOpen}
 		>
-			<DialogContent className='absolute z-[88888888]'>
-				<DialogHeader className='relative mx-auto w-24 h-24 mb-2'>
+			<DialogContent className='absolute z-[9999999]'>
+				<DialogHeader>
 					<div className='relative mx-auto w-24 h-24 mb-2'>
 						<Image
 							src={snackImage}
-							alt='snack image'
+							alt='snake image'
 							className='object-contain'
+							fill
 						/>
 					</div>
 					<DialogTitle className='text-3xl text-center font-bold tracking-tight text-gray-900'>
@@ -33,6 +34,7 @@ const LoginModal = ({ isOpen, setIsOpen }: LoginModalProps) => {
 						account to complete your purchase.
 					</DialogDescription>
 				</DialogHeader>
+
 				<div className='grid grid-cols-2 gap-6 divide-x divide-gray-200'>
 					<LoginLink className={buttonVariants({ variant: 'outline' })}>Login</LoginLink>
 					<RegisterLink className={buttonVariants({ variant: 'default' })}>Sign up</RegisterLink>

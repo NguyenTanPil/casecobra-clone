@@ -21,7 +21,7 @@ const DesignPreview = ({ configuration }: { configuration: Configuration }) => {
 	const { toast } = useToast();
 	const { user } = useKindeBrowserClient();
 	const [showConfetti, setShowConfetti] = useState<boolean>(false);
-	const [isLoginModalOpen, setIsLoginModelOpen] = useState<boolean>(true);
+	const [isLoginModalOpen, setIsLoginModelOpen] = useState<boolean>(false);
 
 	const { id, color, model, finish, material } = configuration;
 	const tw = COLORS.find(({ value }) => value === color)?.tw;
