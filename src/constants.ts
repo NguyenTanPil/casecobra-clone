@@ -7,6 +7,7 @@ import testimonials6Image from '@/assets/images/testimonials/6.jpg';
 import snack1Image from '@/assets/images/snake-1.png';
 import snack2Image from '@/assets/images/snake-2.png';
 import snack3Image from '@/assets/images/snake-3.png';
+import { OrderStatus } from '@prisma/client';
 
 export const PHONE = [
 	testimonials1Image,
@@ -136,3 +137,11 @@ export const FINISHES = {
 } as const;
 
 export const BASE_PRICE = 14_00;
+export const WEEK_GOAL = 500;
+export const MONTH_GOAL = 2500;
+
+export const LABEL_MAP: Record<keyof typeof OrderStatus, string> = {
+	awaiting_shipment: 'Awaiting Shipment',
+	fulfilled: 'Fulfilled',
+	shipped: 'Shipped',
+};
