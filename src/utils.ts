@@ -29,3 +29,27 @@ export const base64ToBlob = (base64: string, mimeType: string) => {
 	const byteArray = new Uint8Array(byteNumbers);
 	return new Blob([byteArray], { type: mimeType });
 };
+
+export const constructMetadata = ({
+	title = 'CaseCobra - custom high-quality phone cases',
+	description = 'Create custom high-quality phone cases in seconds',
+	image = '/thumbnail.png',
+	icons = '/favicon.ico',
+}: {
+	title?: string;
+	description?: string;
+	image?: string;
+	icons?: string;
+} = {}) => {
+	return {
+		title,
+		description,
+		openGraph: {
+			title,
+			description,
+			images: [{ url: image }],
+		},
+		icons,
+		metadataBase: new URL('https://casecobra-clone.vercel.app/'),
+	};
+};

@@ -63,7 +63,7 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 	const router = useRouter();
 	const { toast } = useToast();
 	const { startUpload } = useUploadThing('imageUploader');
-	const { mutate: saveConfig } = useMutation({
+	const { mutate: saveConfig, status } = useMutation({
 		mutationKey: ['save-config'],
 		mutationFn: async (args: SaveConfigArgs) => {
 			await Promise.all([saveConfiguration(), _saveConfig(args)]);
@@ -340,6 +340,9 @@ const DesignConfigurator = ({ configId, imageUrl, imageDimensions }: DesignConfi
 								{formatPrice((BASE_PRICE + options.finish.price + options.material.price) / 100)}
 							</p>
 							<Button
+								isLoading={status === 'loading'}
+								disabled={status === 'loading'}
+								loadingText='Saving...'
 								size='sm'
 								className='w-full '
 								onClick={() =>
